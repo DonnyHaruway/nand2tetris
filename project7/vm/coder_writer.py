@@ -1,3 +1,4 @@
+from .constants import CommandType
 class CodeWriter:
     def __init__(self, output_file: str):
         self.output_file = output_file
@@ -14,7 +15,7 @@ class CodeWriter:
                 "AM=M-1",
                 "D=M",
                 "A=A-1",
-                "M=M+D"
+                "M=D+M"
             ]
             self.file.write("\n".join(asm) + "\n")
         elif command == 'sub':
@@ -40,18 +41,18 @@ class CodeWriter:
                 "D=M",
                 "A=A-1",
                 "D=M-D",
-                f"@EQ_TRUE{self.label_counter}",
+                f"@{self.current_filename}.EQ_TRUE.{self.label_counter}",
                 "D;JEQ",
                 "@SP",
                 "A=M-1",
-                "M=0",  # false
-                f"@EQ_END{self.label_counter}",
+                "M=0", # false
+                f"@{self.current_filename}EQ_END.{self.label_counter}",
                 "0;JMP",
-                f"(EQ_TRUE{self.label_counter})",
+                f"({self.current_filename}.EQ_TRUE.{self.label_counter})",
                 "@SP",
                 "A=M-1",
                 "M=-1", # true
-                f"(EQ_END{self.label_counter})"
+                f"({self.current_filename}.EQ_END.{self.label_counter})"
             ]
             self.file.write("\n".join(asm) + "\n")
             self.label_counter += 1
@@ -62,21 +63,22 @@ class CodeWriter:
                 "D=M",
                 "A=A-1",
                 "D=M-D",
-                f"@GT_TRUE{self.label_counter}",
+                f"@{self.current_filename}.GT_TRUE.{self.label_counter}",
                 "D;JGT",
                 "@SP",
                 "A=M-1",
                 "M=0",  # false
-                f"@GT_END{self.label_counter}",
+                f"@{self.current_filename}.GT_END.{self.label_counter}",
                 "0;JMP",
-                f"(GT_TRUE{self.label_counter})",
+                f"({self.current_filename}.GT_TRUE.{self.label_counter})",
                 "@SP",
                 "A=M-1",
                 "M=-1", # true
-                f"(GT_END{self.label_counter})"
+                f"({self.current_filename}.GT_END.{self.label_counter})"
             ]
             self.file.write("\n".join(asm) + "\n")
             self.label_counter += 1
+
         elif command == 'lt':
             asm = [
                 "@SP",
@@ -84,18 +86,18 @@ class CodeWriter:
                 "D=M",
                 "A=A-1",
                 "D=M-D",
-                f"@LT_TRUE{self.label_counter}",
+                f"@{self.current_filename}.LT_TRUE.{self.label_counter}",
                 "D;JLT",
                 "@SP",
                 "A=M-1",
                 "M=0",  # false
-                f"@LT_END{self.label_counter}",
+                f"@{self.current_filename}.LT_END.{self.label_counter}",
                 "0;JMP",
-                f"(LT_TRUE{self.label_counter})",
+                f"({self.current_filename}.LT_TRUE.{self.label_counter})",
                 "@SP",
                 "A=M-1",
                 "M=-1", # true
-                f"(LT_END{self.label_counter})"
+                f"({self.current_filename}.LT_END.{self.label_counter})"
             ]
             self.file.write("\n".join(asm) + "\n")
             self.label_counter += 1
@@ -128,22 +130,113 @@ class CodeWriter:
             raise ValueError(f"Unknown arithmetic command: {command}")
 
     def write_push_pop(self, command: str, segment: str, index: int):
-        if command == 'C_PUSH':
-            if segment == 'constant':
+        if command == CommandType.C_PUSH:
+            if segment == 'argument':
+                asm = [
+                    "@ARG",
+                    "D=M",
+                    f"@{index}",
+                    "A=D+A",
+                    "D=M",
+                ]
+            elif segment == 'local':
+                asm = [
+                    "@LCL",
+                    "D=M",
+                    f"@{index}",
+                    "A=D+A",
+                    "D=M",
+                ]
+            elif segment == 'static':
+                asm = [
+                    f"@{self.current_filename}.{index}",
+                    "D=M",
+                ]
+            elif segment == 'constant':
                 asm = [
                     f"@{index}",
                     "D=A",
-                    "@SP",
-                    "A=M",
-                    "M=D",
-                    "@SP",
-                    "M=M+1"
                 ]
-                self.file.write("\n".join(asm) + "\n")
+            elif segment == 'this':
+                asm = [
+                    "@THIS",
+                    "D=M",
+                    f"@{index}",
+                    "A=D+A",
+                    "D=M",
+                ]
+            elif segment == 'that':
+                asm = [
+                    "@THAT",
+                    "D=M",
+                    f"@{index}",
+                    "A=D+A",
+                    "D=M",
+                ]
+            elif segment == 'pointer':
+                asm = [
+                    f"@{3 + index}",
+                    "D=M",
+                ]
+            elif segment == 'temp':
+                asm = [
+                    f"@{5 + index}",
+                    "D=M",
+                ]
             else:
-                raise NotImplementedError(f"Push for segment {segment} not implemented.")
-        elif command == 'C_POP':
-            raise NotImplementedError(f"Pop command not implemented.")
+                raise ValueError(f"Unknown segment: {segment}")
+            asm += [
+                "@SP",
+                "A=M",
+                "M=D",
+                "@SP",
+                "M=M+1"
+            ]
+            self.file.write("\n".join(asm) + "\n")
+        elif command == CommandType.C_POP:
+            if segment in ['local', 'argument', 'this', 'that']:
+                seg_map = {'local':'LCL', 'argument':'ARG', 'this':'THIS', 'that':'THAT'}
+                asm = [
+                    f"@{seg_map[segment]}",
+                    "D=M",
+                    f"@{index}",
+                    "D=D+A",
+                    "@R13",
+                    "M=D"
+                ]
+            elif segment == 'temp':
+                asm = [
+                    f"@{5 + index}",
+                    "D=A",
+                    "@R13",
+                    "M=D"
+                ]
+            elif segment == 'pointer':
+                target = "THIS" if index == 0 else "THAT"
+                asm = [
+                    f"@{target}",
+                    "D=A",
+                    "@R13",
+                    "M=D"
+                ]
+            elif segment == 'static':
+                asm = [
+                    f"@{self.current_filename}.{index}",
+                    "D=A",
+                    "@R13",
+                    "M=D"
+                ]
+            else:
+                raise ValueError(f"Unknown segment: {segment}")
+            asm += [
+                "@SP",
+                "AM=M-1",
+                "D=M",
+                "@R13",
+                "A=M",
+                "M=D"
+            ]
+            self.file.write("\n".join(asm) + "\n")
         else:
             raise ValueError(f"Unknown command type: {command}")
 

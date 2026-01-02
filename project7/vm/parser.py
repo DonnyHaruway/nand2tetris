@@ -1,4 +1,4 @@
-from constants import CommandType
+from .constants import CommandType
 
 class Parser:
     def __init__(self, input_file : str):
