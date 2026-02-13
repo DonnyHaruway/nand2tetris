@@ -1,5 +1,4 @@
-import re
-from token_types import TokenType, Keyword, Symbol
+from .token_types import TokenType, Keyword, Symbol
 
 class JackTokenizer:
     def __init__(self, input_file : str):
@@ -113,4 +112,10 @@ class JackTokenizer:
     def string_val(self):
         if self.token_type() == TokenType.STRING_CONST:
             return self.tokens[self.current_token_index]['value']
+        return None
+    
+    def peek_next_token(self):
+        next_index = self.current_token_index + 1
+        if 0 <= next_index < len(self.tokens):
+            return self.tokens[next_index]
         return None
