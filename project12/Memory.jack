@@ -1,0 +1,73 @@
+class Memory {
+    static Array memory;
+    static Array heap, freeList;
+
+    function void init() {
+        let memory = 0;
+        let heap = 2048;
+        let freeList = heap;
+        // sentinel
+        let heap[0] = heap + 2;  // next
+        let heap[1] = 0;         // dummy
+        // first node
+        let heap[2] = 0;
+        let heap[3] = 14332;
+        return;
+    }
+
+    function int firstFit(int size) {
+        var int prev, curr;
+        let prev = freeList;
+        let curr = freeList;
+
+        while (~(curr = 0)) {
+            if (memory[curr + 1] > size + 2) {  // length > size + 2
+                return prev;
+            }
+            let prev = curr;
+            let curr = memory[curr]; 
+        }
+
+        return -1;
+    }
+
+    /* Finds and allocates from the heap a memory block of the 
+       specified size and returns its base address */
+    function int alloc(int size) {
+        var int prev, curr;
+        let prev = firstFit(size);
+        let curr = memory[prev];
+
+        // Linked list manipulation
+        let memory[prev] = curr + size + 2;
+        let memory[curr + size + 2] = memory[curr];
+        let memory[curr + size + 2 + 1] = memory[curr + 1] - size - 2;
+
+        let memory[curr] = 0;
+        let memory[curr + 1] = size;
+
+        return curr + 2; // データ領域の先頭を返す。
+    }
+
+    /* De-allocates the given object and frees its space */
+    function void deAlloc(int object) {
+        var int block;
+        let block = object - 2;
+
+        let memory[block] = memory[freeList];
+        let memory[freeList] = block;
+
+        return;
+    }
+
+    /* Returns the value of the given RAM address */
+    function int peek(int address) {
+        return memory[address];
+    }
+
+    /* Sets the value of the given RAM address to the given value */
+    function void poke(int address, int value) {
+        let memory[address] = value;
+        return;
+    }
+}
