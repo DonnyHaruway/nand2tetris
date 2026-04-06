@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//usr/**)",
+      "Bash(python3 /tmp/run_visual_tests.py)",
+      "Bash(python3 /tmp/x11_screenshot.py /tmp/test_screenshot.png)",
+      "Read(//home/taichi-shimizu/**)",
+      "Bash(timeout 30 python3 /tmp/x11_snap.py /tmp/test_snap.png)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}
