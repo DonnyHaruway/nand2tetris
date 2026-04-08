@@ -48,20 +48,33 @@ class Math {
     }
 
     function int divide(int x, int y) {
-        var int q, absX, absY, res;
-        let absX = Math.abs(x);
-        let absY = Math.abs(y);
-        if (absY > absX) { return 0; }
-        let q = Math.divide(absX, absY + absY);
-        if ((absX - Math.multiply(q + q, absY)) < absY) {
-            let res = q + q;
-        } else {
-            let res = q + q + 1;
+        var int ax, ay, q, rem, value, multiple;
+        if (y = 0) {
+            return 0;
         }
+
+        let ax = Math.abs(x);
+        let ay = Math.abs(y);
+        let q = 0;
+        let rem = ax;
+
+        while (~(rem < ay)) {
+            let value = ay;
+            let multiple = 1;
+
+            while (~((value + value) > rem) & ((value + value) > 0)) {
+                let value = value + value;
+                let multiple = multiple + multiple;
+            }
+
+            let rem = rem - value;
+            let q = q + multiple;
+        }
+
         if ((x < 0) = (y < 0)) {
-            return res;
+            return q;
         } else {
-            return -res;
+            return -q;
         }
     }
 

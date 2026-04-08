@@ -28,7 +28,7 @@ class Screen {
     function void clearScreen() {
         var int i;
         let i = 0;
-        while (16384 + i < 24575 + 1) {
+        while ((16384 + i) < (24575 + 1)) {
             do Memory.poke(16384 + i, 0);
             let i = i + 1;
         }
@@ -42,7 +42,7 @@ class Screen {
 
     function void drawPixel(int x, int y) {
         var int address, value, mask;
-        let address = 32 * y + x / 16;
+        let address = (32 * y) + (x / 16);
         let value = Memory.peek(16384 + address);
         /* set the (x % 16) th bit of value to the current color */
         let mask = twoToThe[x & 15];
@@ -134,10 +134,11 @@ class Screen {
     }
 
     function void drawCircle(int x, int y, int r) { 
-        var int dy;
+        var int dy, span;
         let dy = -r;
-        while (dy < r + 1) {
-            do Screen.drawLine(x - Math.sqrt(r*r - dy*dy), y+dy, x + Math.sqrt(r*r - dy*dy), y+dy);
+        while (dy < (r + 1)) {
+            let span = Math.sqrt((r * r) - (dy * dy));
+            do Screen.drawLine(x - span, y + dy, x + span, y + dy);
             let dy = dy + 1;
         }
         return;
